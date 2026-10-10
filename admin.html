@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>夸克资源管理</title>
+<style>
+body{background:#101010;color:#fff;font-family:sans-serif;padding:20px;max-width:500px;margin:auto}
+h2{color:#e4bd72}
+input,button{box-sizing:border-box;width:100%;padding:13px;margin:8px 0;border-radius:8px}
+input{background:#222;color:white;border:1px solid #555}
+button{background:#e4bd72;border:0;font-weight:bold}
+#app{display:none}
+p{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<h2>管理员登录</h2>
+<div id="login">
+<input id="email" type="email" placeholder="Supabase登录邮箱">
+<input id="password" type="password" placeholder="登录密码">
+<button onclick="login()">登录</button>
+</div>
+<div id="app">
+<h2>添加影视资源</h2>
+<input id="title" placeholder="资源名称">
+<input id="quark" placeholder="夸克分享链接">
+<button onclick="publish()">发布资源</button>
+<button onclick="logout()">退出登录</button>
+</div>
+<p id="msg"></p>
+<script>
+const U="https://zmfqjmspsrqcjtybxxfr.supabase.co";
+const K="sb_publishable_T16XJ_-93_hkHYfy81gL6A_hvPM-NoU";
+let token="";
+async function login(){
+msg.textContent="正在登录…";
+try{
+let r=await fetch(U+"/auth/v1/token?grant_type=password",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({email:email.value,password:password.value})});
+let d=await r.json();if(!r.ok)throw Error(d.msg||d.message||"账号或密码不正确");
+token=d.access_token;document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";msg.textContent="登录成功";
+}catch(e){msg.textContent="登录失败："+e.message}
+}
+async function publish(){
+if(!title.value.trim()||!quark.value.trim()){msg.textContent="请填写资源名称和夸克链接";return}
+msg.textContent="正在发布…";
+try{
+let r=await fetch(U+"/rest/v1/movies",{method:"POST",headers:{apikey:K,Authorization:"Bearer "+token,"Content-Type":"application/json",Prefer:"return=minimal"},body:JSON.stringify({title:title.value.trim(),category:"电影",quark_url:quark.value.trim()})});
+if(!r.ok){let d=await r.json();throw Error(d.message||"请检查数据库新增权限")}
+msg.textContent="发布成功！";title.value="";quark.value="";
+}catch(e){msg.textContent="发布失败："+e.message}
+}
+function logout(){token="";document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";msg.textContent="已退出登录"}
+</script>
+</body>
+</html>
